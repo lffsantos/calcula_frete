@@ -8,7 +8,7 @@ Python version: 3.5
 
 Como executar:
 
-> python axado.py <origem> <destino> <nota_fiscal> <peso>
+> python axado.py origem destino nota_fiscal peso
 
 
 Executar Testes:
