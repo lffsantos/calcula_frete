@@ -4,37 +4,68 @@ import csv
 __author__ = 'lucas'
 
 
+def ler_arquivo(file):
+    '''
+      Entre com o arquivo, as chaves do dicionário sera os valores do header
+      :return: lista de dict com os dados da do arquivo
+    '''
+    if ".tsv" in file:
+        delimiter = "\t"
+    else:
+        delimiter = ","
+    cr = csv.reader(open(file,"rb"), delimiter=delimiter)
+    header = next(cr,None)
+    dados = []
+    for row in cr:
+        arquivo = {}
+        for i in xrange(0, len(header)):
+            arquivo[header[i]] = row[i]
+        dados.append(arquivo)
+
+    return dados
+
+
 class Transporte:
 
-    def __init__(self, origem,destino,nota_fiscal,peso):
-        self.tabela = {"tabela1": {}, "tabela2": {}}
-        self.tabela["tabela1"]["rota"] = self.ler_arquivo("tabela/rotas.csv")
-        self.tabela["tabela1"]["preco_p_kg"] = self.ler_arquivo("tabela/preco_por_kg.csv")
-        self.tabela["tabela2"]["rota"] = self.ler_arquivo("tabela2/rotas.tsv")
-        self.tabela["tabela2"]["preco_p_kg"] = self.ler_arquivo("tabela2/preco_por_kg.tsv")
+    def __init__(self, origem, destino, nota_fiscal, peso, tabelas):
+        self.tabela = tabelas
         self.origem = origem
         self.destino = destino
         self.nota_fiscal = int(nota_fiscal)
         self.peso = int(peso)
 
     def valor_seguro(self, seguro):
+        '''
+        calculo do seguro
+        '''
         return (self.nota_fiscal * seguro) / float(100)
 
-    def valor_faixa(self, faixa, tabela):
-        for t in tabela:
+    def valor_faixa(self, faixa, tabela_preco_p_kg):
+        '''
+        retorna o calculo do peso para uma faixa de peso
+        exemplo: peso = 5, faixa = 'flo'
+         nome,inicial,final,preco
+         flo,0,10,12
+         flo,11,20,11
+
+         return peso*12
+        '''
+
+        for t in tabela_preco_p_kg:
             if t["nome"] == faixa:
+                # Try/except adicionado pois as vezes o valor final pode ser "--" que da erro ao tentar converter para float então a faixa do peso será essa
                 try:
                     if float(t["inicial"]) <= self.peso and float(t["final"]) > self.peso:
                         return float(t["preco"]) * self.peso
                 except ValueError:
                     return float(t["preco"]) * self.peso
 
-    def calcula_frete(self, rota, tabela):
+    def calcula_valor_frete(self, rota, tabela):
         subtotal = 0
         subtotal += self.valor_seguro(int(rota['seguro']))
         if rota.get("fixa"):
             subtotal += int(rota['fixa'])
-        subtotal += self.valor_faixa(rota["kg"], self.tabela[tabela]["preco_p_kg"])
+        subtotal += self.valor_faixa(rota["kg"], tabela["preco_p_kg"])
         if rota.get("alfandega"):
             subtotal += subtotal * (int(rota["alfandega"])/float(100))
         icms = rota.get("icms", 6)
@@ -45,43 +76,39 @@ class Transporte:
     def get_prazo(self, rota):
         return rota['prazo']
 
-    def ler_arquivo(self, file):
+    def frete(self):
         '''
-          Entre com o arquivo, as chaves do dicionário sera os valores do header
-          :return: lista de dict com os dados da do arquivo
+        gerência o frete, pega a rota informada, calcula o frete e o prazo
         '''
-        if ".tsv" in file:
-            delimiter = "\t"
-        else:
-            delimiter = ","
-        cr = csv.reader(open(file,"rb"), delimiter=delimiter)
-        header = next(cr,None)
-        dados = []
-        for row in cr:
-            arquivo = {}
-            for i in xrange(0, len(header)):
-                arquivo[header[i]] = row[i]
-            dados.append(arquivo)
-
-        return dados
-
-    def processa_calculos(self):
         output = []
         for t in self.tabela:
-            rota = self.get_rota(self.origem,self.destino, self.tabela[t])
+            rota = self.get_rota(self.tabela[t])
             if rota:
                 if rota.get("excedeu_limite"):
-                    print(t, "-","-")
+                    output.append((t, "-","-"))
                 else:
-                    print(t, self.get_prazo(rota), self.calcula_frete(rota, t))
+                    output.append((t, self.get_prazo(rota), self.calcula_valor_frete(rota, self.tabela[t])))
             else:
                 print("rota nao encontrada!")
 
-    def get_rota(self, origem, destino, tabela):
+        return output
+
+    def format_output(self, frete):
+        '''
+        formata os dados de saída
+        '''
+        for f in frete:
+            print("%s: %s, %s" % (f[0],f[1],f[2]))
+
+    def get_rota(self, tabela):
+        '''
+        retorna a linha com a rota solicitada na tabela
+        '''
         dados_rota = {}
         for line in tabela['rota']:
-            if origem in line['origem'] and destino in line['destino']:
-                if line.get("limite", self.peso) <= self.peso:
+            if self.origem == line['origem'] and self.destino == line['destino']:
+                limite =  int(line.get("limite", 0))
+                if limite == 0 or limite >= self.peso:
                     dados_rota = line
                     break
                 else:
@@ -93,24 +120,21 @@ if __name__ == '__main__':
     '''
      leitura dos parametros de entrada
     '''
-    origem = "saopaulo"
-    destino = "florianopolis"
-    nota_fiscal = 50
-    peso = 130
-    # origem = sys.argv[1]
-    # destino = sys.argv[2]
-    # nota_fiscal = sys.argv[3]
-    # peso = sys.argv[4]
-    # print origem, destino, nota_fiscal, peso
+    origem = sys.argv[1]
+    destino = sys.argv[2]
+    nota_fiscal = sys.argv[3]
+    peso = sys.argv[4]
 
-    transporte = Transporte(origem,destino,nota_fiscal,peso)
-    transporte.processa_calculos()
-    # rota = transporte.get_rota(origem, destino, transporte.tabela["tabela1"]["rota"])
-    # if not rota:
-    #     print("Não temos essa rota")
-    # else:
-    #     # print(rota)
-    #     # print(transporte.calcula_prazo(rota))
-    #     transporte.formata_saida()
+    # Carrega as tabelas que alimentam o sistema
+    tabela = {"tabela1": {}, "tabela2": {}}
+    tabela["tabela1"]["rota"] = ler_arquivo("tabela/rotas.csv")
+    tabela["tabela1"]["preco_p_kg"] = ler_arquivo("tabela/preco_por_kg.csv")
+    tabela["tabela2"]["rota"] = ler_arquivo("tabela2/rotas.tsv")
+    tabela["tabela2"]["preco_p_kg"] = ler_arquivo("tabela2/preco_por_kg.tsv")
+
+    transporte = Transporte(origem,destino,nota_fiscal,peso, tabela)
+
+    frete = transporte.frete()
+    transporte.format_output(frete)
 
 
