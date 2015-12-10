@@ -62,15 +62,15 @@ class TestTransporte(unittest.TestCase):
 
     def test_frete(self):
 
-        self.assertEqual(self.transporte.frete(), [('tabela2', '2', '90.43'), ('tabela1', '3', '104.79')])
+        self.assertEqual(self.transporte.frete().sort(), [('tabela2', '2', '90.43'), ('tabela1', '3', '104.79')].sort())
 
         self.transporte = Transporte("saopaulo","florianopolis", 50, 130, self.tabela)
 
-        self.assertEqual(self.transporte.frete(), [('tabela1', '1', '1393.09')])
+        self.assertEqual(self.transporte.frete().sort(), [('tabela1', '1', '1393.09')].sort())
 
         self.transporte = Transporte("florianopolis","curitiba",50,100, self.tabela)
 
-        self.assertEqual(self.transporte.frete(), [('tabela2', '-', '-'), ('tabela1', '3', '540.96')])
+        self.assertEqual(self.transporte.frete().sort(), [('tabela2', '-', '-'), ('tabela1', '3', '540.96')].sort())
 
 if __name__ == '__main__':
     unittest.main()

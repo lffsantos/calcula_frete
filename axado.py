@@ -13,15 +13,16 @@ def ler_arquivo(file):
         delimiter = "\t"
     else:
         delimiter = ","
-    cr = csv.reader(open(file,"rb"), delimiter=delimiter)
+    file = open(file,"r")
+    cr = csv.reader(file, delimiter=delimiter)
     header = next(cr,None)
     dados = []
     for row in cr:
         arquivo = {}
-        for i in xrange(0, len(header)):
+        for i in range(0, len(header)):
             arquivo[header[i]] = row[i]
         dados.append(arquivo)
-
+    file.close()
     return dados
 
 
