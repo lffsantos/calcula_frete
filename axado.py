@@ -121,10 +121,14 @@ if __name__ == '__main__':
     '''
      leitura dos parametros de entrada
     '''
-    origem = sys.argv[1]
-    destino = sys.argv[2]
-    nota_fiscal = sys.argv[3]
-    peso = sys.argv[4]
+    try:
+        origem = sys.argv[1]
+        destino = sys.argv[2]
+        nota_fiscal = sys.argv[3]
+        peso = sys.argv[4]
+    except:
+        print("Todos os campos devem ser preenchidos: ex: python axado.py <origem> <destino> <nota_fiscal> <peso>")
+        exit()
 
     # Carrega as tabelas que alimentam o sistema
     tabela = {"tabela1": {}, "tabela2": {}}
