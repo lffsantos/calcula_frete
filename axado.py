@@ -32,8 +32,8 @@ class Transporte:
         self.tabela = tabelas
         self.origem = origem
         self.destino = destino
-        self.nota_fiscal = int(nota_fiscal)
-        self.peso = int(peso)
+        self.nota_fiscal = float(nota_fiscal)
+        self.peso = float(peso)
 
     def valor_seguro(self, seguro):
         '''
@@ -63,14 +63,14 @@ class Transporte:
 
     def calcula_valor_frete(self, rota, tabela):
         subtotal = 0
-        subtotal += self.valor_seguro(int(rota['seguro']))
+        subtotal += self.valor_seguro(float(rota['seguro']))
         if rota.get("fixa"):
-            subtotal += int(rota['fixa'])
+            subtotal += float(rota['fixa'])
         subtotal += self.valor_faixa(rota["kg"], tabela["preco_p_kg"])
         if rota.get("alfandega"):
-            subtotal += subtotal * (int(rota["alfandega"])/float(100))
+            subtotal += subtotal * (float(rota["alfandega"])/float(100))
         icms = rota.get("icms", 6)
-        total = subtotal / ((100 - int(icms))/float(100))
+        total = subtotal / ((100 - float(icms))/float(100))
 
         return ("%.2f" % total)
 
@@ -108,7 +108,7 @@ class Transporte:
         dados_rota = {}
         for line in tabela['rota']:
             if self.origem == line['origem'] and self.destino == line['destino']:
-                limite =  int(line.get("limite", 0))
+                limite =  float(line.get("limite", 0))
                 if limite == 0 or limite >= self.peso:
                     dados_rota = line
                     break
